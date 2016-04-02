@@ -18,11 +18,11 @@ function ensembleTestSelectFeatures(rounding,TrainTest,loocv,time,folder)
             load(strcat('SelectFeaturesMed',folder,'.mat'));
         end
     elseif rounding == 1
-        if ~exist(strcat('SelectFeaturesMean',folder,'.mat'),'file')
+        if ~exist(strcat(folder, '/SelectFeaturesMean',num2str(time),'.mat'),'file')
             error('Quitting EnsembleTest. Please run FowardSelection.m')
         else
-            load(strcat('featuresMean',folder,'.mat'));
-            load(strcat('SelectFeaturesMean',folder,'.mat'));
+            load(strcat(folder, '/featuresMean', num2str(time), '.mat'));
+            load(strcat(folder, '/SelectFeaturesMean', num2str(time), '.mat'));
         end
     end
 %         load features.mat;
@@ -189,6 +189,7 @@ function ensembleTestSelectFeatures(rounding,TrainTest,loocv,time,folder)
 
     % Run entire testing dataset against validation set
     
+   
 
     for i = 1:nMetric;
         if TrainTest == 0 
@@ -198,20 +199,24 @@ function ensembleTestSelectFeatures(rounding,TrainTest,loocv,time,folder)
             [feature_vector_train, ratings_train] = featureVector(features_train);
         end
         [X, muX, sigmaX] = zscore(feature_vector_train(:,selectFeatures{i}));
-        y = ratings_train(:,i); 
-        models1{i} = svmtrain(y, X, '-s 3 -q'); 
+        y = ratings_train(:,i);
+        models1{i} = svmtrain(y, X, '-s 3 -q');
         models2{i} = cvglmnet(X, y, 'gaussian');
         models3{i} = fitrtree(X, y);
         models4{i} = fitcknn(X,y,'NumNeighbors',3);
+        
     end
     
-%     if rounding
-% %         ratings_val = round(ratings_val);
-%         ratings_test = round(ratings_test);
-%     end
+    %     if rounding
+    % %         ratings_val = round(ratings_val);
+    %         ratings_test = round(ratings_test);
+    %     end
+    
+    muX_final = cell(nMetric, 1);
+    sigmaX_final = cell(nMetric, 1);
     
     for i = 1:nMetric
-        if TrainTest == 0 
+        if TrainTest == 0
             test_part = test(cvpart{i});
             features_test = features(test_part);
             features_train = features(~test_part);
@@ -224,6 +229,8 @@ function ensembleTestSelectFeatures(rounding,TrainTest,loocv,time,folder)
         end
         selectfeature_vector_test = feature_vector_test(:,selectFeatures{i});
         [X, muX, sigmaX] = zscore(feature_vector_train(:,selectFeatures{i}));
+        muX_final{i} = muX;
+        sigmaX_final{i} = sigmaX;
         Xtest = bsxfun(@rdivide,bsxfun(@minus, selectfeature_vector_test, muX), sigmaX); 
         Xtest(isnan(Xtest)) = 0;
         [pred_test1(:,i), accuracy, prob_estimates] = svmpredict(ratings_test(:,i), Xtest, models1{i},'-q');
@@ -276,5 +283,5 @@ function ensembleTestSelectFeatures(rounding,TrainTest,loocv,time,folder)
     save(strcat('RegEnsembleSelect',fileround,filepart,time,'.mat'), 'ratings_train', 'ratings_test', ...
         'models1','models2','models3','models4',...
         'pred_test', 'pred_test1', 'pred_test2', 'pred_test3', 'pred_test4',...
-        'pred_train', 'pred_train1', 'pred_train2', 'pred_train3', 'pred_train4');
+        'pred_train', 'pred_train1', 'pred_train2', 'pred_train3', 'pred_train4', 'muX_final', 'sigmaX_final');
 end

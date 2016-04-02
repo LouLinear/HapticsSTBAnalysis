@@ -3,8 +3,9 @@ clearvars -except rounding time
 addpath('LIBSVM');
 addpath('glmnet_matlab');
 
-filename1 = strcat('MLRunfeaturesMed',num2str(time),'.mat');
-filename2 = strcat('featuresMean',num2str(time),'.mat');
+filename1 = strcat('MLRun_', num2str(time), '/','MLRunfeaturesMed', num2str(time),'.mat');
+filename2 = strcat('MLRun_', num2str(time), '/','featuresMean',num2str(time),'.mat');
+filename3 = strcat('MLRun_', num2str(time), '/','ReconstructVecs',num2str(time), '.mat');
 
 if rounding == 0 
     if ~exist(filename1,'file')
@@ -51,8 +52,9 @@ elseif rounding == 1
 
         disp('Extracting Features...')
         features = staticFeatures(data,rounding);
-        features = featurePCA(features);
+        [features, eigvecs, offset] = featurePCA(features);
         save(filename2, 'features');
+        save(filename3, 'eigvecs', 'offset')
     else
         disp('Loading Features...')
         load(filename2);
@@ -69,6 +71,8 @@ final_index = {};
 % ratings = floor(ratings);
 % % ratings = round(ratings);
 % ratings = sum(ratings,2);
+
+%% Step-wise feature selection
 
 for metric = 1:size(ratings, 2) % runs the feature selection for each metric
     features_test = feature_vector; %initializes the set of features to test to be the entire set
@@ -105,6 +109,8 @@ for metric = 1:size(ratings, 2) % runs the feature selection for each metric
     kept_pred(:,metric) = svmXval(features_kept, ratings(:,metric));
 end
 
+%% putting selected feature in a file
+
 for i=1:length(final_index)
     metric_index = [];
     for j=1:length(final_index{i})
@@ -115,8 +121,8 @@ end
 selectFeatures = total_index;
 
 if rounding == 0
-    save(strcat('SelectFeaturesMed',num2str(time),'.mat'),'selectFeatures')
+    save(strcat('MLRun_', num2str(time), '/','SelectFeaturesMed',num2str(time),'.mat'),'selectFeatures')
 elseif rounding == 1
-    save(strcat('SelectFeaturesMean',num2str(time),'.mat'),'selectFeatures')
+    save(strcat('MLRun_', num2str(time), '/','SelectFeaturesMean',num2str(time),'.mat'),'selectFeatures')
 end
 
