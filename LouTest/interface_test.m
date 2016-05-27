@@ -3,5 +3,6 @@ function something = interface_test( input )
     %   Detailed explanation goes here
     disp(input)
     something = 1;
+    disp('this is running from matlab')
 end
 

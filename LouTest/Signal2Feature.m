@@ -1,4 +1,4 @@
-function features = Signal2Feature( rawDataDir, rounding )
+function features = Signal2Feature( rawDataDir, csvFileName, task, rounding )
     %Converts collected data from da Vinci to features
     %RawDataDir is the directory to the file
     
@@ -7,7 +7,7 @@ function features = Signal2Feature( rawDataDir, rounding )
     %load relevant files so I can get PCA features
     load 'ReconstructVecs.mat' %gives me "eigvecs" and "offset" (PCA)
     
-    data = STBData(rawDataDir, 'task', 1);
+    data = STBData(rawDataDir, csvFileName, 'task', task);
     data = data(~cellfun(@(x)any(isnan(x(:))), {data.score}));
     
     %assuming data is good here, extract features
